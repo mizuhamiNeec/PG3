@@ -13,5 +13,6 @@
   </ItemGroup>
   <ItemGroup>
     <None Include=".editorconfig" />
+    <None Include="answer.md" />
   </ItemGroup>
 </Project>

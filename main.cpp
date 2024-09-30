@@ -1,24 +1,37 @@
 #include <cstdio>
+#include <valarray>
 
-template <typename T>
-T Min(T a, T b) {
-	if (a < b) { return a; }
-	if (b < a) { return b; }
-	return 0;
-}
-
-template <>
-char Min<char>(char a, char b) {
-	printf("数字以外は代入できません。");
-	return 0;
+int Recursive(const int pay, const int hour) {
+	if (hour == 1) {
+		return pay;
+	}
+	const int current = pay * 2 - 50;
+	return pay + Recursive(current, hour - 1);
 }
 
 int main() {
+	printf("何時間働かせますか?\n");
 
-	printf("%d\n", Min<int>(114, 514));
-	printf("%f\n", Min<float>(114.0f, 514.0f));
-	printf("%lf\n", Min<double>(114.0, 514.0));
-	printf("%c\n", Min<char>('a', 'b'));
+	int workTime;
+	scanf_s("%d", &workTime);
+
+	workTime = std::abs(workTime);
+
+	printf("%d時間働きます...\n", workTime);
+
+	// 一般的な資金体系 時給1072円
+	int pay = 0;
+
+	for (unsigned int i = 0; i < workTime; ++i) {
+		pay += 1072;
+	}
+
+	printf("一般的 : %d\n", pay);
+
+	// 再帰的な資金体系
+	constexpr int start = 100;
+	const int result = Recursive(start, workTime); // 計算結果 
+	printf("再帰的 : %d\n", result);
 
 	return 0;
 }
