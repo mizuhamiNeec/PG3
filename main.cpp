@@ -1,24 +1,38 @@
 #include <cstdio>
+#include <windows.h>
+#include <cstdlib>
+#include <ctime>
 
-template <typename T>
-T Min(T a, T b) {
-	if (a < b) { return a; }
-	if (b < a) { return b; }
-	return 0;
+typedef void(*PFunc)(int*);
+
+void DispResult(int* result) {
+	if (*result == 0) {
+		printf("正解!\n");
+	} else {
+		printf("不正解...\n");
+	}
 }
 
-template <>
-char Min<char>(char a, char b) {
-	printf("数字以外は代入できません。");
-	return 0;
+void SetTimeout(PFunc p, int second, int* result) {
+	Sleep(second * 1000);
+	p(result);
 }
 
 int main() {
+	printf("奇数か偶数か入力してください\n奇数 = 0, 偶数 = 1\n");
 
-	printf("%d\n", Min<int>(114, 514));
-	printf("%f\n", Min<float>(114.0f, 514.0f));
-	printf("%lf\n", Min<double>(114.0, 514.0));
-	printf("%c\n", Min<char>('a', 'b'));
+	int answer;
+	scanf_s("%d", &answer);
+
+	// ランダムな結果を生成
+	srand(static_cast<unsigned int>(time(NULL)));
+	int randomResult = rand() % 2;
+
+	PFunc p;
+	p = DispResult;
+
+	printf("答えは...\n");
+	SetTimeout(p, 3, &randomResult);  // 3秒後に結果を表示
 
 	return 0;
 }
