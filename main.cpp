@@ -2,18 +2,9 @@
 #include <windows.h>
 #include <cstdlib>
 #include <ctime>
+#include <functional> 
 
-typedef void(*PFunc)(int*);
-
-void DispResult(int* result) {
-	if (*result == 0) {
-		printf("正解!\n");
-	} else {
-		printf("不正解...\n");
-	}
-}
-
-void SetTimeout(PFunc p, int second, int* result) {
+void SetTimeout(const std::function<void(int*)>& p, const int second, int* result) {
 	Sleep(second * 1000);
 	p(result);
 }
@@ -24,15 +15,19 @@ int main() {
 	int answer;
 	scanf_s("%d", &answer);
 
-	// ランダムな結果を生成
-	srand(static_cast<unsigned int>(time(NULL)));
+	srand(static_cast<unsigned int>(time(nullptr)));
 	int randomResult = rand() % 2;
 
-	PFunc p;
-	p = DispResult;
+	auto DispResult = [answer](const int* result) {
+		if (*result == answer) {
+			printf("正解!\n");
+		} else {
+			printf("不正解...\n");
+		}
+		};
 
 	printf("答えは...\n");
-	SetTimeout(p, 3, &randomResult);  // 3秒後に結果を表示
+	SetTimeout(DispResult, 3, &randomResult);
 
 	return 0;
 }
