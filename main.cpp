@@ -1,61 +1,50 @@
 #include <cstdio>
 #include <Windows.h>
 
-class Enemy {
+// クラステンプレート
+template <typename T1, typename T2>
+class MinComparer {
 public:
-	// メンバ関数ポインタのテーブル
-	typedef void (Enemy::* StateFunc)();
+	// コンストラクタ
+	MinComparer(T1 val1, T2 val2) : m_val1(val1), m_val2(val2) {}
 
-	// 状態遷移関数
-	void Update();
+	// 2つの引数を比較して小さい方をT1型で返すメンバ関数
+	T1 Min() const {
+		if (m_val1 < m_val2) {
+			return static_cast<T1>(m_val1);
+		}
+		return static_cast<T1>(m_val2);
+	}
 
 private:
-	void Approach();
-	void Shoot();
-	void Leave();
-
-	// 現在の状態
-	int currentState_ = 0; // 0: Approach, 1: Shoot, 2: Leave
-
-	// メンバ関数ポインタのテーブル
-	static StateFunc spFuncTable_[];
-};
-
-void Enemy::Update() {
-	// 現在の状態に応じた関数を呼び出す
-	(this->*spFuncTable_[currentState_])();
-
-	// 次の状態に遷移
-	currentState_ = (currentState_ + 1) % 3; // 状態を接近→射撃→離脱→接近の順に循環
-}
-
-void Enemy::Approach() {
-	printf("敵が接近\n");
-}
-
-void Enemy::Shoot() {
-	printf("敵が射撃\n");
-}
-
-void Enemy::Leave() {
-	printf("敵が離脱\n");
-}
-
-// メンバ関数ポインタのテーブル
-Enemy::StateFunc Enemy::spFuncTable_[] = {
-	&Enemy::Approach,
-	&Enemy::Shoot,
-	&Enemy::Leave
+	T1 m_val1;
+	T2 m_val2;
 };
 
 int main() {
-	Enemy enemy;
+	// int と float の比較
+	MinComparer<int, float> comparer1(5, 3.5f);
+	printf("Smallest value (int, float): %d\n", comparer1.Min());
 
-	// 10回更新して状態遷移を確認
-	for (int i = 0; i < 10; ++i) {
-		enemy.Update();
-		Sleep(1000); // 1秒待機
-	}
+	// int と double の比較
+	MinComparer<int, double> comparer2(5, 6.7);
+	printf("Smallest value (int, double): %d\n", comparer2.Min());
+
+	// float と int の比較
+	MinComparer<float, int> comparer3(3.7f, 6);
+	printf("Smallest value (float, int): %f\n", comparer3.Min());
+
+	// float と double の比較
+	MinComparer<float, double> comparer4(3.7f, 2.9);
+	printf("Smallest value (float, double): %f\n", comparer4.Min());
+
+	// double と int の比較
+	MinComparer<double, int> comparer5(4.5, 7);
+	printf("Smallest value (double, int): %f\n", comparer5.Min());
+
+	// double と float の比較
+	MinComparer<double, float> comparer6(5.6, 4.3f);
+	printf("Smallest value (double, float): %f\n", comparer6.Min());
 
 	return 0;
 }
