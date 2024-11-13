@@ -6,10 +6,10 @@ public:
 	virtual void Move() const {
 		std::cout << "Vehicle is moving" << std::endl;
 	}
-	virtual ~Vehicle() = default;  // 仮想デストラクタ
+	virtual ~Vehicle() = default;
 };
 
-// 派生 Car
+// 派生
 class Car : public Vehicle {
 public:
 	void Move() const override {
@@ -17,7 +17,7 @@ public:
 	}
 };
 
-// 派生 Bicycle
+// 派生
 class Bicycle : public Vehicle {
 public:
 	void Move() const override {
