@@ -3,9 +3,9 @@
 /workspace.xml
 # Rider の無視対象ファイル
 /modules.xml
-/contentModel.xml
 /projectSettingsUpdater.xml
 /.idea.PG3.iml
+/contentModel.xml
 # エディターベースの HTTP クライアントリクエスト
 /httpRequests/
 # Datasource local storage ignored files
