@@ -1,52 +1,66 @@
 #include <iostream>
-#include <list>
-#include <iterator>
+#include <fstream>
+#include <string>
+#include <vector>
+#include <regex>
 #include <algorithm>
 
-// 駅リストを表示する関数
-static void PrintStationList(const std::list<const char*>& stationList) {
-	for (const auto& station : stationList) {
-		std::cout << station << " -> ";
+struct KmtMail {
+	std::string email;
+	int year;
+	int number;
+};
+
+// メールアドレスから年度と学籍番号を出す
+static KmtMail ParseEmail(const std::string& email) {
+	const std::regex pattern(R"(k(\d{3})g(\d{4})@)");
+	std::smatch match;
+	if (std::regex_search(email, match, pattern)) {
+		const int year = std::stoi(match[1].str());
+		const int number = std::stoi(match[2].str());
+		return {email, year, number};
 	}
-	std::cout << "Loop\n";
+	return {email, -1, -1}; // 失敗
 }
 
 int main() {
-	// 山手線の駅リスト（1970年時点）
-	std::list<const char*> stationList1970 = {
-		"Tokyo", "Kanda", "Akihabara", "Okachimachi", "Ueno",
-		"Uguisudani", "Nippori", "Tabata", "Komagome", "Sugamo",
-		"Otsuka", "Ikebukuro", "Mejiro", "Takadanobaba", "Shin-Okubo",
-		"Shinjuku", "Yoyogi", "Harajuku", "Shibuya", "Ebisu",
-		"Meguro", "Gotanda", "Osaki", "Shinagawa", "Tamachi",
-		"Hamamatsucho", "Shimbashi", "Yurakucho"
-	};
-
-	// 表示：1970年
-	std::cout << "1970:\n";
-	PrintStationList(stationList1970);
-
-	// 1971年：西日暮里駅を追加
-	std::list<const char*> stationList2019 = stationList1970;
-	auto it = std::find(stationList2019.begin(), stationList2019.end(), "Nippori");
-	if (it != stationList2019.end()) {
-		stationList2019.insert(it, "Nishi-Nippori");
+	// ファイルを開く
+	std::ifstream file("PG3_2024_03_02.txt");
+	if (!file) {
+		std::cerr << "ファイルを開けませんでした。\n";
+		return 1;
 	}
 
-	// 表示：2019年（西日暮里駅のみ追加）
-	std::cout << "\n2019:\n";
-	PrintStationList(stationList2019);
+	std::string line;
+	std::vector<KmtMail> emails;
 
-	// 2020年：高輪ゲートウェイ駅を追加
-	std::list<const char*> stationList2022 = stationList2019;
-	it = std::find(stationList2022.begin(), stationList2022.end(), "Tamachi");
-	if (it != stationList2022.end()) {
-		stationList2022.insert(std::next(it), "Takanawa Gateway");
+	// ファイルからメールアドレスを読む
+	while (std::getline(file, line)) {
+		// 配列からメールアドレスを抽出
+		std::regex emailPattern(R"([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})");
+		auto begin = std::sregex_iterator(line.begin(), line.end(), emailPattern);
+		auto end = std::sregex_iterator();
+
+		for (auto it = begin; it != end; ++it) {
+			KmtMail info = ParseEmail(it->str());
+			if (info.year != -1 && info.number != -1) {
+				emails.push_back(info);
+			}
+		}
 	}
 
-	// 表示：2022年（西日暮里駅と高輪ゲートウェイ駅を含む）
-	std::cout << "\n2022:\n";
-	PrintStationList(stationList2022);
+	// 年と番号でソート
+	std::sort(emails.begin(), emails.end(), [](const KmtMail& a, const KmtMail& b) {
+		if (a.year != b.year) {
+			return a.year < b.year;
+		}
+		return a.number < b.number;
+	});
+
+	// プリント
+	for (const auto& email : emails) {
+		std::cout << email.email << '\n';
+	}
 
 	return 0;
 }
