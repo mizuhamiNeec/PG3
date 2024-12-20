@@ -1,66 +1,31 @@
 #include <iostream>
-#include <fstream>
-#include <string>
-#include <vector>
-#include <regex>
-#include <algorithm>
+#include <thread>
+#include <mutex>
 
-struct KmtMail {
-	std::string email;
-	int year;
-	int number;
-};
+namespace {
+	std::mutex mutex;
+	int currentThread = 1;
 
-// メールアドレスから年度と学籍番号を出す
-static KmtMail ParseEmail(const std::string& email) {
-	const std::regex pattern(R"(k(\d{3})g(\d{4})@)");
-	std::smatch match;
-	if (std::regex_search(email, match, pattern)) {
-		const int year = std::stoi(match[1].str());
-		const int number = std::stoi(match[2].str());
-		return {email, year, number};
-	}
-	return {email, -1, -1}; // 失敗
-}
-
-int main() {
-	// ファイルを開く
-	std::ifstream file("PG3_2024_03_02.txt");
-	if (!file) {
-		std::cerr << "ファイルを開けませんでした。\n";
-		return 1;
-	}
-
-	std::string line;
-	std::vector<KmtMail> emails;
-
-	// ファイルからメールアドレスを読む
-	while (std::getline(file, line)) {
-		// 配列からメールアドレスを抽出
-		std::regex emailPattern(R"([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})");
-		auto begin = std::sregex_iterator(line.begin(), line.end(), emailPattern);
-		auto end = std::sregex_iterator();
-
-		for (auto it = begin; it != end; ++it) {
-			KmtMail info = ParseEmail(it->str());
-			if (info.year != -1 && info.number != -1) {
-				emails.push_back(info);
+	void Print(const int threadNum) {
+		while (true) {
+			std::lock_guard<std::mutex> lock(mutex);
+			if (currentThread == threadNum) {
+				std::cout << "thread " << threadNum << '\n';
+				currentThread++;
+				break;
 			}
 		}
 	}
+}
 
-	// 年と番号でソート
-	std::sort(emails.begin(), emails.end(), [](const KmtMail& a, const KmtMail& b) {
-		if (a.year != b.year) {
-			return a.year < b.year;
-		}
-		return a.number < b.number;
-	});
+int main() {
+	std::thread t1(Print, 1);
+	std::thread t2(Print, 2);
+	std::thread t3(Print, 3);
 
-	// プリント
-	for (const auto& email : emails) {
-		std::cout << email.email << '\n';
-	}
+	t1.join();
+	t2.join();
+	t3.join();
 
 	return 0;
 }
