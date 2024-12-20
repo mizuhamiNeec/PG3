@@ -1,66 +1,108 @@
-#include <iostream>
-#include <fstream>
-#include <string>
-#include <vector>
-#include <regex>
-#include <algorithm>
+#include "Audio.h"
+#include "AxisIndicator.h"
+#include "DirectXCommon.h"
+#include "GameScene.h"
+#include "ImGuiManager.h"
+#include "PrimitiveDrawer.h"
+#include "TextureManager.h"
+#include "WinApp.h"
 
-struct KmtMail {
-	std::string email;
-	int year;
-	int number;
-};
+// Windowsアプリでのエントリーポイント(main関数)
+int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
+	WinApp* win = nullptr;
+	DirectXCommon* dxCommon = nullptr;
+	// 汎用機能
+	Input* input = nullptr;
+	Audio* audio = nullptr;
+	AxisIndicator* axisIndicator = nullptr;
+	PrimitiveDrawer* primitiveDrawer = nullptr;
+	GameScene* gameScene = nullptr;
 
-// メールアドレスから年度と学籍番号を出す
-static KmtMail ParseEmail(const std::string& email) {
-	const std::regex pattern(R"(k(\d{3})g(\d{4})@)");
-	std::smatch match;
-	if (std::regex_search(email, match, pattern)) {
-		const int year = std::stoi(match[1].str());
-		const int number = std::stoi(match[2].str());
-		return {email, year, number};
-	}
-	return {email, -1, -1}; // 失敗
-}
+	// ゲームウィンドウの作成
+	win = WinApp::GetInstance();
+	win->CreateGameWindow(L"PG3_05_01");
 
-int main() {
-	// ファイルを開く
-	std::ifstream file("PG3_2024_03_02.txt");
-	if (!file) {
-		std::cerr << "ファイルを開けませんでした。\n";
-		return 1;
-	}
+	// DirectX初期化処理
+	dxCommon = DirectXCommon::GetInstance();
+	dxCommon->Initialize(win);
 
-	std::string line;
-	std::vector<KmtMail> emails;
+#pragma region 汎用機能初期化
+	// ImGuiの初期化
+	ImGuiManager* imguiManager = ImGuiManager::GetInstance();
+	imguiManager->Initialize(win, dxCommon);
 
-	// ファイルからメールアドレスを読む
-	while (std::getline(file, line)) {
-		// 配列からメールアドレスを抽出
-		std::regex emailPattern(R"([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})");
-		auto begin = std::sregex_iterator(line.begin(), line.end(), emailPattern);
-		auto end = std::sregex_iterator();
+	// 入力の初期化
+	input = Input::GetInstance();
+	input->Initialize();
 
-		for (auto it = begin; it != end; ++it) {
-			KmtMail info = ParseEmail(it->str());
-			if (info.year != -1 && info.number != -1) {
-				emails.push_back(info);
-			}
+	// オーディオの初期化
+	audio = Audio::GetInstance();
+	audio->Initialize();
+
+	// テクスチャマネージャの初期化
+	TextureManager::GetInstance()->Initialize(dxCommon->GetDevice());
+	TextureManager::Load("white1x1.png");
+
+	// スプライト静的初期化
+	Sprite::StaticInitialize(dxCommon->GetDevice(), WinApp::kWindowWidth, WinApp::kWindowHeight);
+
+	// 3Dモデル静的初期化
+	Model::StaticInitialize();
+
+	// 軸方向表示初期化
+	axisIndicator = AxisIndicator::GetInstance();
+	axisIndicator->Initialize();
+
+	primitiveDrawer = PrimitiveDrawer::GetInstance();
+	primitiveDrawer->Initialize();
+#pragma endregion
+
+	// ゲームシーンの初期化
+	gameScene = new GameScene();
+	gameScene->Initialize();
+
+	// メインループ
+	while (true) {
+		// メッセージ処理
+		if (win->ProcessMessage()) {
+			break;
 		}
+
+		// ImGui受付開始
+		imguiManager->Begin();
+		// 入力関連の毎フレーム処理
+		input->Update();
+		// ゲームシーンの毎フレーム処理
+		gameScene->Update();
+		// 軸表示の更新
+		axisIndicator->Update();
+		// ImGui受付終了
+		imguiManager->End();
+
+		// 描画開始
+		dxCommon->PreDraw();
+		// ゲームシーンの描画
+		gameScene->Draw();
+		// 軸表示の描画
+		axisIndicator->Draw();
+		// プリミティブ描画のリセット
+		primitiveDrawer->Reset();
+		// ImGui描画
+		imguiManager->Draw();
+		// 描画終了
+		dxCommon->PostDraw();
 	}
 
-	// 年と番号でソート
-	std::sort(emails.begin(), emails.end(), [](const KmtMail& a, const KmtMail& b) {
-		if (a.year != b.year) {
-			return a.year < b.year;
-		}
-		return a.number < b.number;
-	});
+	// 各種解放
+	delete gameScene;
+	// 3Dモデル解放
+	Model::StaticFinalize();
+	audio->Finalize();
+	// ImGui解放
+	imguiManager->Finalize();
 
-	// プリント
-	for (const auto& email : emails) {
-		std::cout << email.email << '\n';
-	}
+	// ゲームウィンドウの破棄
+	win->TerminateGameWindow();
 
 	return 0;
 }
