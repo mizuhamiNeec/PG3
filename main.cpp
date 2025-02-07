@@ -1,31 +1,26 @@
 #include <iostream>
-#include <thread>
-#include <mutex>
-
-namespace {
-	std::mutex mutex;
-	int currentThread = 1;
-
-	void Print(const int threadNum) {
-		while (true) {
-			std::lock_guard<std::mutex> lock(mutex);
-			if (currentThread == threadNum) {
-				std::cout << "thread " << threadNum << '\n';
-				currentThread++;
-				break;
-			}
-		}
-	}
-}
+#include <string>
+#include <chrono>
 
 int main() {
-	std::thread t1(Print, 1);
-	std::thread t2(Print, 2);
-	std::thread t3(Print, 3);
+	// コピー
+	std::string a(100000, 'a');
 
-	t1.join();
-	t2.join();
-	t3.join();
+	auto startCopy = std::chrono::high_resolution_clock::now();
+	std::string b = a; // コピー
+	auto endCopy = std::chrono::high_resolution_clock::now();
+	auto copyResult = std::chrono::duration_cast<std::chrono::microseconds>(endCopy - startCopy).count();
+
+	// 移動
+	auto startMove = std::chrono::high_resolution_clock::now();
+	std::string c = std::move(a); // 移動
+	auto endMove = std::chrono::high_resolution_clock::now();
+	auto resultMove = std::chrono::duration_cast<std::chrono::microseconds>(endMove - startMove).count();
+
+	// 結果を表示
+	std::cout << "100,000文字を移動とコピーで比較しました。\n";
+	std::cout << "コピー: " << copyResult << "μs\n";
+	std::cout << "移動  : " << resultMove << "μs\n";
 
 	return 0;
 }
